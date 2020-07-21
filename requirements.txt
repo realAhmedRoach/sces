@@ -1,0 +1,5 @@
+pandas~=1.0.5
+setuptools~=49.2.0
+django~=3.0.8
+djangorestframework~=3.11.0
+psycopg2~=2.8.5
