@@ -12,8 +12,8 @@ class ExchangeUserAdmin(UserAdmin):
     form = ExchangeUserChangeForm
     model = ExchangeUser
 
-    fieldsets = UserAdmin.fieldsets + ((None, {'fields': ('party', )}), )
-    add_fieldsets = UserAdmin.add_fieldsets + ((None, {'fields': ('email', 'username', 'password', 'party',)}),)
+    fieldsets = UserAdmin.fieldsets + ((None, {'fields': ('party',)}),)
+    add_fieldsets = UserAdmin.add_fieldsets + ((None, {'fields': ('email', 'party',)}),)
 
     list_display = ['username', 'email', 'party', ]
 
@@ -22,7 +22,15 @@ class PartyAdmin(ModelAdmin):
     list_display = ['symbol', 'name', ]
 
 
+class OrderAdmin(ModelAdmin):
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ['party']
+        else:
+            return []
+
+
 admin.site.register(ExchangeUser, ExchangeUserAdmin)
 
 admin.site.register(Party, PartyAdmin)
-admin.site.register(Order)
+admin.site.register(Order, OrderAdmin)

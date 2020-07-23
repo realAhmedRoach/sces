@@ -4,12 +4,10 @@ from apps.salam.models import Order
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Order
-        fields = ['uid', 'order_time', 'commodity', 'quantity', 'price', 'filled']
+    def update(self, instance, validated_data):
+        validated_data.pop('party')
+        return super(OrderSerializer, self).update(instance, validated_data)
 
-
-class NewOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = '__all__'

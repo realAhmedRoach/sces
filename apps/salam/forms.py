@@ -1,17 +1,16 @@
-from django import forms
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
-from .models import ExchangeUser, Party
+from .models import ExchangeUser
 
 
 class ExchangeUserCreationForm(UserCreationForm):
 
     class Meta:
         model = ExchangeUser
-        fields = ('username', 'email', 'party')
+        fields = ('party',)
 
 
 class ExchangeUserChangeForm(UserChangeForm):
 
     class Meta:
         model = ExchangeUser
-        fields = ('username', 'email', 'party')
+        fields = ('party',)
