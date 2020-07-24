@@ -7,6 +7,11 @@ class OrderSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         validated_data.pop('party')
         return super(OrderSerializer, self).update(instance, validated_data)
+    
+    def create(self, validated_data):
+        print(validated_data)
+        validated_data['party'] = self.context['request'].user.party
+        return super(OrderSerializer, self).create(validated_data)
 
     class Meta:
         model = Order

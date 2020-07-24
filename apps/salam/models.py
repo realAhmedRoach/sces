@@ -14,8 +14,11 @@ class ExchangeUser(AbstractUser):
 
 class Party(models.Model):
     uid = UUIDField(primary_key=True, default=uuid.uuid4, editable=False, unique=True)
-    name = models.CharField(verbose_name='Name', max_length=120, unique=True)
     symbol = models.CharField(verbose_name='Symbol', max_length=4, unique=True)
+    name = models.CharField(verbose_name='Name', max_length=120, unique=True)
+
+    def __str__(self):
+        return '%s - %s' % (self.symbol, self.name)
 
     class Meta:
         verbose_name_plural = 'Parties'
