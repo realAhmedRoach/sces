@@ -35,3 +35,11 @@ class Order(models.Model):
     price = models.DecimalField(verbose_name='Price', max_digits=7, decimal_places=4)
     side = models.CharField(verbose_name='Trade Side', max_length=4, choices=TRADE_SIDES)
     filled = models.BooleanField(verbose_name='Filled?', default=False)
+
+    def __str__(self):
+        symbol = self.party.symbol if self.party else 'NONE'
+        return '%s %s@%s (%s)' % (symbol, self.side, self.commodity, self.order_time)
+
+    class Meta:
+        get_latest_by = 'order_time'
+        ordering = ['-order_time']

@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
-from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 
 from .forms import ExchangeUserCreationForm, ExchangeUserChangeForm
@@ -23,8 +22,10 @@ class PartyAdmin(ModelAdmin):
 
 
 class OrderAdmin(ModelAdmin):
+    list_display = ['commodity', 'quantity', 'price', 'side', 'party', 'order_time']
+
     def get_readonly_fields(self, request, obj=None):
-        if obj:
+        if obj and obj.party:
             return ['party']
         else:
             return []

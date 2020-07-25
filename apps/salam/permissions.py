@@ -1,7 +1,5 @@
 from rest_framework import permissions
 
-from apps.salam.models import ExchangeUser
-
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
     """
