@@ -24,8 +24,20 @@ class Party(models.Model):
         verbose_name_plural = 'Parties'
 
 
+class BidAskManager(models.Manager):
+    def get_queryset(self):
+        return super(BidAskManager, self).get_queryset().filter(filled=False)
+
+    def bid(self, cmdty):
+        return self.get_queryset().filter(commodity=cmdty, side='BUY').order_by('price', '-order_time').first()
+
+    def ask(self, cmdty):
+        return self.get_queryset().filter(commodity=cmdty, side='SELL').order_by('-price', '-order_time').first()
+
+
 class Order(models.Model):
     TRADE_SIDES = (('BUY', 'BUY'), ('SELL', 'SELL'))
+    ORDER_TYPES = (('MRKT', 'Market'), ('LMT', 'Limit'))
 
     uid = UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     party = models.ForeignKey(verbose_name='Party', to=Party, on_delete=models.SET_NULL, null=True)
@@ -34,7 +46,12 @@ class Order(models.Model):
     quantity = models.PositiveIntegerField(verbose_name='Quantity')
     price = models.DecimalField(verbose_name='Price', max_digits=7, decimal_places=4)
     side = models.CharField(verbose_name='Trade Side', max_length=4, choices=TRADE_SIDES)
+    order_type = models.CharField(verbose_name='Order Type', max_length=4, choices=ORDER_TYPES,
+                                  default=ORDER_TYPES[0][0])
     filled = models.BooleanField(verbose_name='Filled?', default=False)
+
+    objects = models.Manager()
+    bidask = BidAskManager()
 
     def __str__(self):
         symbol = self.party.symbol if self.party else 'NONE'
@@ -42,4 +59,4 @@ class Order(models.Model):
 
     class Meta:
         get_latest_by = 'order_time'
-        ordering = ['-order_time']
+        ordering = ['filled', '-order_time']
