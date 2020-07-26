@@ -29,7 +29,19 @@ class OrderSerializer(serializers.ModelSerializer):
 
 
 class BidAskSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Order
         fields = ['commodity', 'price', 'quantity', 'side']
+
+
+class CommoditiesSerializer(serializers.ModelSerializer):
+    commodities = serializers.SerializerMethodField()
+
+    def get_commodities(self, obj):
+        choices = [choice[0] for choice in Order._meta.get_field('commodity').choices]
+        choice_urls = ['http://127.0.0.1:8000/api/bidask/%s' % choice for choice in choices]
+        return choice_urls
+
+    class Meta:
+        model = Order
+        fields = ['commodities']

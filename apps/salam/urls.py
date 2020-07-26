@@ -7,13 +7,11 @@ from . import views
 
 router = DefaultRouter()
 router.register(r'orderbook', views.OrderViewSet, basename='order')
+router.register(r'bidask', views.BidAskViewSet, basename='bidask')
 router.register(r'bidask/(?P<commodity>.+)', views.BidAskViewSet, basename='bidask')
 
 urlpatterns = [
     path('api/', include(router.urls)),
-]
-
-urlpatterns += [
     path('api/auth/', include('rest_framework.urls'))
 ]
 

@@ -1,11 +1,10 @@
 from rest_framework import permissions, mixins, status
-from rest_framework.generics import ListAPIView
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from apps.salam.models import Order
 from apps.salam.permissions import IsOwnerOrReadOnly
-from apps.salam.serializers import OrderSerializer, BidAskSerializer
+from apps.salam.serializers import OrderSerializer, BidAskSerializer, CommoditiesSerializer
 
 
 # TODO: home view
@@ -38,12 +37,23 @@ class BidAskViewSet(mixins.ListModelMixin, GenericViewSet):
     lookup_url_kwarg = 'commodity'
     serializer_class = BidAskSerializer
 
+    # TODO: show commodity options in homepage
     def get_queryset(self):
-        commodity = self.kwargs[self.lookup_url_kwarg]
-        bid = Order.bidask.bid(cmdty=commodity)
-        ask = Order.bidask.ask(cmdty=commodity)
-        return [bid, ask]
+        queryset = []
+        if self.lookup_url_kwarg in self.kwargs:
+            commodity = self.kwargs[self.lookup_url_kwarg]
+            bid = Order.bidask.bid(cmdty=commodity)
+            ask = Order.bidask.ask(cmdty=commodity)
+            if bid or ask:
+                queryset = [bid, ask]
+            else:
+                queryset = Order.objects.none()
+        return queryset
 
     def list(self, request, *args, **kwargs):
-        serializer = self.get_serializer(self.get_queryset(), many=True)
-        return Response(serializer.data)
+        if self.lookup_url_kwarg in self.kwargs:
+            serializer = self.get_serializer(self.get_queryset(), many=True)
+            return Response(serializer.data)
+        else:
+            serializer = CommoditiesSerializer(Order.objects.none())
+            return Response(serializer.data)
