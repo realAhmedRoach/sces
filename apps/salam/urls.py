@@ -11,6 +11,7 @@ router.register(r'bidask', views.BidAskViewSet, basename='bidask')
 router.register(r'bidask/(?P<commodity>.+)', views.BidAskViewSet, basename='bidask')
 
 urlpatterns = [
+    path('', views.index),
     path('api/', include(router.urls)),
     path('api/auth/', include('rest_framework.urls'))
 ]

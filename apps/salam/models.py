@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models import UUIDField
+from django.db.models import UUIDField, F
 import uuid
 from sces import commodity
 
@@ -26,7 +26,8 @@ class Party(models.Model):
 
 class BidAskManager(models.Manager):
     def get_queryset(self):
-        return super(BidAskManager, self).get_queryset().filter(filled=False)
+        return super(BidAskManager, self).get_queryset().filter(quantity_filled__lt=F('quantity')).annotate(
+            quantity_unfilled=F('quantity') - F('quantity_filled'))
 
     def bid(self, cmdty):
         return self.get_queryset().filter(commodity=cmdty, side='BUY').order_by('price', '-order_time').first()
@@ -48,7 +49,8 @@ class Order(models.Model):
     side = models.CharField(verbose_name='Trade Side', max_length=4, choices=TRADE_SIDES)
     order_type = models.CharField(verbose_name='Order Type', max_length=4, choices=ORDER_TYPES,
                                   default=ORDER_TYPES[0][0])
-    filled = models.BooleanField(verbose_name='Filled?', default=False)
+    quantity_filled = models.PositiveIntegerField(verbose_name='Quantity Filled', default=0)
+    filled = models.BooleanField(verbose_name='Filled?', default=False)  # DEPRECATED
 
     objects = models.Manager()
     bidask = BidAskManager()

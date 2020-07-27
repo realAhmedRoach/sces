@@ -1,3 +1,10 @@
 from django.test import TestCase
 
-# Create your tests here.
+
+class BidAskTestCase(TestCase):
+    pass
+
+
+class OrderBookTestCase(TestCase):
+    pass
+

@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from rest_framework import permissions, mixins, status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
@@ -7,7 +8,9 @@ from apps.salam.permissions import IsOwnerOrReadOnly
 from apps.salam.serializers import OrderSerializer, BidAskSerializer, CommoditiesSerializer
 
 
-# TODO: home view
+def index(request):
+    return HttpResponse('<a href="/api">API</a>')
+
 
 class OrderViewSet(mixins.CreateModelMixin,
                    mixins.RetrieveModelMixin,
@@ -19,8 +22,7 @@ class OrderViewSet(mixins.CreateModelMixin,
     lookup_field = 'uid'
 
     def get_queryset(self):
-        party = self.request.user.party
-        return Order.objects.filter(party=party)
+        return Order.objects.filter(party=self.request.user.party)
 
     def options(self, request, *args, **kwargs):
         """
@@ -44,7 +46,7 @@ class BidAskViewSet(mixins.ListModelMixin, GenericViewSet):
             commodity = self.kwargs[self.lookup_url_kwarg]
             bid = Order.bidask.bid(cmdty=commodity)
             ask = Order.bidask.ask(cmdty=commodity)
-            if bid or ask:
+            if bid and ask:
                 queryset = [bid, ask]
             else:
                 queryset = Order.objects.none()
