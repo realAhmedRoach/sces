@@ -2,7 +2,10 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.db.models import F
 import uuid
-from sces import commodity
+
+from django.utils.functional import lazy
+
+from sces.commodity import get_commodity_choices, get_valid_contracts
 
 
 class ExchangeUser(AbstractUser):
@@ -27,7 +30,7 @@ class Party(models.Model):
 class WarehouseReceipt(models.Model):
     uid = models.UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     created_time = models.DateTimeField(verbose_name='Created Time', auto_now_add=True)
-    commodity = models.CharField(verbose_name='Commodity', max_length=2, choices=commodity.get_commodity_choices())
+    commodity = models.CharField(verbose_name='Commodity', max_length=2, choices=get_commodity_choices())
     quantity = models.PositiveIntegerField(verbose_name='Quantity')
     party = models.ForeignKey(verbose_name='Party', to='Party', on_delete=models.CASCADE)
 
@@ -54,8 +57,9 @@ class Order(models.Model):
     uid = models.UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     party = models.ForeignKey(verbose_name='Party', to=Party, on_delete=models.CASCADE, null=True)
     order_time = models.DateTimeField(verbose_name='Order Time', auto_now_add=True)
-    commodity = models.CharField(verbose_name='Commodity', max_length=2, choices=commodity.get_commodity_choices())
+    commodity = models.CharField(verbose_name='Commodity', max_length=2, choices=get_commodity_choices())
     quantity = models.PositiveIntegerField(verbose_name='Quantity')
+    contract = models.CharField(verbose_name='Contract', max_length=4, choices=get_valid_contracts())
     price = models.DecimalField(verbose_name='Price', max_digits=7, decimal_places=4)
     side = models.CharField(verbose_name='Trade Side', max_length=4, choices=TRADE_SIDES)
     order_type = models.CharField(verbose_name='Order Type', max_length=4, choices=ORDER_TYPES,

@@ -1,10 +1,26 @@
 from enum import Enum
+from datetime import datetime
 
 BBL = 'barrel'
 BSHL = 'bushel'
 OZ = 'troy ounce'
 CWT = 'hundredweight'
 LB = 'pound'
+
+CONTRACT_MONTHS = [
+    ('F', 'Jan'),
+    ('G', 'Feb'),
+    ('H', 'Mar'),
+    ('J', 'Apr'),
+    ('K', 'May'),
+    ('M', 'Jun'),
+    ('N', 'Jul'),
+    ('Q', 'Aug'),
+    ('U', 'Sep'),
+    ('V', 'Oct'),
+    ('X', 'Nov'),
+    ('Z', 'Dec'),
+]
 
 
 class Commodity(Enum):
@@ -69,3 +85,21 @@ def get_metal_commodities():
 
 def get_commodity_choices():
     return [(com.symbol, com.long_name) for com in Commodity]
+
+
+def get_valid_contracts():
+    contracts = []
+
+    month = datetime.now().month
+    year = datetime.now().year
+
+    for y in range(2):
+        for m in range(12):
+            code = CONTRACT_MONTHS[month - 1][0] + str((year % 1000) + y)
+            verbose = CONTRACT_MONTHS[month - 1][1] + ' ' + str(year + y)
+            contracts.append((code, verbose))
+            month = (month + 1) if month < 12 else 1
+            if month == 1:
+                year += 1
+
+    return contracts
