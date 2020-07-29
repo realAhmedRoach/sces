@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.db.models import UUIDField, F
+from django.db.models import F
 import uuid
 from sces import commodity
 
@@ -13,7 +13,7 @@ class ExchangeUser(AbstractUser):
 
 
 class Party(models.Model):
-    uid = UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    uid = models.UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     symbol = models.CharField(verbose_name='Symbol', max_length=4, unique=True)
     name = models.CharField(verbose_name='Name', max_length=120, unique=True)
 
@@ -22,6 +22,17 @@ class Party(models.Model):
 
     class Meta:
         verbose_name_plural = 'Parties'
+
+
+class WarehouseReceipt(models.Model):
+    uid = models.UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    created_time = models.DateTimeField(verbose_name='Created Time', auto_now_add=True)
+    commodity = models.CharField(verbose_name='Commodity', max_length=2, choices=commodity.get_commodity_choices())
+    quantity = models.PositiveIntegerField(verbose_name='Quantity')
+    party = models.ForeignKey(verbose_name='Party', to='Party', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return '<%s> %s%s @%s' % (self.party, self.quantity, self.commodity, self.created_time)
 
 
 class BidAskManager(models.Manager):
@@ -40,8 +51,8 @@ class Order(models.Model):
     TRADE_SIDES = (('BUY', 'BUY'), ('SELL', 'SELL'))
     ORDER_TYPES = (('MRKT', 'Market'), ('LMT', 'Limit'))
 
-    uid = UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
-    party = models.ForeignKey(verbose_name='Party', to=Party, on_delete=models.SET_NULL, null=True)
+    uid = models.UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    party = models.ForeignKey(verbose_name='Party', to=Party, on_delete=models.CASCADE, null=True)
     order_time = models.DateTimeField(verbose_name='Order Time', auto_now_add=True)
     commodity = models.CharField(verbose_name='Commodity', max_length=2, choices=commodity.get_commodity_choices())
     quantity = models.PositiveIntegerField(verbose_name='Quantity')
@@ -50,7 +61,6 @@ class Order(models.Model):
     order_type = models.CharField(verbose_name='Order Type', max_length=4, choices=ORDER_TYPES,
                                   default=ORDER_TYPES[0][0])
     quantity_filled = models.PositiveIntegerField(verbose_name='Quantity Filled', default=0)
-    filled = models.BooleanField(verbose_name='Filled?', default=False)  # DEPRECATED
 
     objects = models.Manager()
     bidask = BidAskManager()
@@ -61,4 +71,4 @@ class Order(models.Model):
 
     class Meta:
         get_latest_by = 'order_time'
-        ordering = ['filled', '-order_time']
+        ordering = ['-order_time']
