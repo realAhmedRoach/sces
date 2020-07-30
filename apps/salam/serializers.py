@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 
 from apps.salam.models import Order
 
@@ -31,7 +32,7 @@ class OrderSerializer(serializers.ModelSerializer):
 class BidAskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
-        fields = ['commodity', 'price', 'quantity', 'side']
+        fields = ['commodity', 'price', 'quantity', 'contract', 'side']
 
 
 class CommoditiesSerializer(serializers.ModelSerializer):
@@ -39,7 +40,11 @@ class CommoditiesSerializer(serializers.ModelSerializer):
 
     def get_commodities(self, obj):
         choices = [choice for choice in Order._meta.get_field('commodity').choices]
-        choice_urls = {choice[1]: 'http://127.0.0.1:8000/api/bidask/%s' % choice[0] for choice in choices}
+        contracts = [contract for contract in Order._meta.get_field('contract').choices]
+        baseurl = reverse('bidask-list', request=self.context['request'])
+        choice_urls = {choice[1]: {
+            contract[1]: '%s%s%s' % (baseurl, choice[0], contract[0]) for contract in contracts
+        } for choice in choices}
         return choice_urls
 
     class Meta:

@@ -43,9 +43,9 @@ class BidAskViewSet(mixins.ListModelMixin, GenericViewSet):
     def get_queryset(self):
         queryset = []
         if self.lookup_url_kwarg in self.kwargs:
-            commodity = self.kwargs[self.lookup_url_kwarg]
-            bid = Order.bidask.bid(cmdty=commodity)
-            ask = Order.bidask.ask(cmdty=commodity)
+            contract_code = self.kwargs[self.lookup_url_kwarg]
+            bid = Order.bidask.bid(contract_code=contract_code)
+            ask = Order.bidask.ask(contract_code=contract_code)
             if bid and ask:
                 queryset = [bid, ask]
             else:
@@ -57,5 +57,5 @@ class BidAskViewSet(mixins.ListModelMixin, GenericViewSet):
             serializer = self.get_serializer(self.get_queryset(), many=True)
             return Response(serializer.data)
         else:
-            serializer = CommoditiesSerializer(Order.objects.none())
+            serializer = CommoditiesSerializer(Order.objects.none(), context={'request': request})
             return Response(serializer.data)

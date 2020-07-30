@@ -51,8 +51,6 @@ class Commodity(Enum):
     SRW = ('SRW', 'ZW', 'SRW Wheat', BSHL)
     HRW = ('HRW', 'KC', 'HRW Wheat', BSHL)
 
-    GLD = ('GLD', 'GC', 'Gold', OZ)
-    SI = ('SI', 'SI', 'Silver', OZ)
     CPR = ('CPR', 'HG', 'Copper', LB)
     PL = ('PL', 'PL', 'Platinum', OZ)
 

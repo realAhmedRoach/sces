@@ -3,8 +3,6 @@ from django.db import models
 from django.db.models import F
 import uuid
 
-from django.utils.functional import lazy
-
 from sces.commodity import get_commodity_choices, get_valid_contracts
 
 
@@ -43,11 +41,13 @@ class BidAskManager(models.Manager):
         return super(BidAskManager, self).get_queryset().filter(quantity_filled__lt=F('quantity')).annotate(
             quantity_unfilled=F('quantity') - F('quantity_filled'))
 
-    def bid(self, cmdty):
-        return self.get_queryset().filter(commodity=cmdty, side='BUY').order_by('price', '-order_time').first()
+    def bid(self, contract_code):
+        return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='BUY')\
+            .order_by('price', '-order_time').first()
 
-    def ask(self, cmdty):
-        return self.get_queryset().filter(commodity=cmdty, side='SELL').order_by('-price', '-order_time').first()
+    def ask(self, contract_code):
+        return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='SELL')\
+            .order_by('-price', '-order_time').first()
 
 
 class Order(models.Model):
@@ -71,7 +71,7 @@ class Order(models.Model):
 
     def __str__(self):
         symbol = self.party.symbol if self.party else 'NONE'
-        return '%s %s@%s (%s)' % (symbol, self.side, self.commodity, self.order_time)
+        return '<%s> %s %s%s (%s)' % (symbol, self.side, self.commodity, self.contract, self.order_time)
 
     class Meta:
         get_latest_by = 'order_time'
