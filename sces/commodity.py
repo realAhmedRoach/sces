@@ -1,3 +1,4 @@
+import calendar
 from enum import Enum
 from datetime import datetime
 
@@ -90,6 +91,10 @@ def get_valid_contracts():
 
     month = datetime.now().month
     year = datetime.now().year
+
+    last_trade_day = calendar.monthrange(year, month)[1] - 10
+    if datetime.now().day > last_trade_day:
+        month += 1
 
     for y in range(2):
         for m in range(12):

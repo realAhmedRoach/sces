@@ -2,6 +2,8 @@ from rest_framework import serializers
 from rest_framework.reverse import reverse
 
 from apps.salam.models import Order
+from commodity import get_valid_contracts
+from validators import validate_contract_code
 
 
 class CurrentUserPartyDefault:
@@ -24,9 +26,14 @@ class OrderSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         return super(OrderSerializer, self).create(validated_data)
 
+    def validate_contract(self, value):
+        validate_contract_code(value)
+        return value
+
     class Meta:
         model = Order
         fields = '__all__'
+        extra_kwargs = {'contract': {'choices': get_valid_contracts()}}
 
 
 class BidAskSerializer(serializers.ModelSerializer):
