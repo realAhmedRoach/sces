@@ -4,7 +4,7 @@ from django.db.models import F
 import uuid
 
 from sces.commodity import get_commodity_choices, get_valid_contracts
-from validators import validate_contract_code
+from apps.salam.validators import validate_contract_code
 
 
 class ExchangeUser(AbstractUser):
@@ -78,3 +78,23 @@ class Order(models.Model):
     class Meta:
         get_latest_by = 'order_time'
         ordering = ['-order_time']
+
+
+class Transaction(models.Model):
+    uid = models.UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    long_party = models.ForeignKey(verbose_name='Long Party', to=Party, on_delete=models.CASCADE,
+                                   related_name='long_party')
+    short_party = models.ForeignKey(verbose_name='Short Party', to=Party, on_delete=models.CASCADE,
+                                    related_name='short_party')
+    fill_time = models.DateTimeField(verbose_name='Fill Time', auto_now_add=True)
+    commodity = models.CharField(verbose_name='Commodity', max_length=2, choices=get_commodity_choices())
+    contract = models.CharField(verbose_name='Contract', max_length=4, validators=[validate_contract_code])
+    price = models.DecimalField(verbose_name='Price', max_digits=7, decimal_places=4)
+    quantity = models.PositiveIntegerField(verbose_name='Quantity')
+
+    def __str__(self):
+        return '%sx%s%s@%s (%s)' % (self.quantity, self.commodity, self.contract, self.price, self.fill_time)
+
+    class Meta:
+        get_latest_by = 'fill_time'
+        ordering = ['-fill_time', 'commodity', 'contract']

@@ -9,7 +9,7 @@ from apps.salam.serializers import OrderSerializer, BidAskSerializer, Commoditie
 
 
 def index(request):
-    return HttpResponse('<a href="/api">API</a>')
+    return HttpResponse('<a href="/api">API</a> - <a href="/admin">Admin</a>')
 
 
 class OrderViewSet(mixins.CreateModelMixin,
@@ -34,28 +34,26 @@ class OrderViewSet(mixins.CreateModelMixin,
         return Response(data, status=status.HTTP_200_OK)
 
 
-class BidAskViewSet(mixins.ListModelMixin, GenericViewSet):
+class BidAskViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericViewSet):
     lookup_field = 'commodity'
     lookup_url_kwarg = 'commodity'
     serializer_class = BidAskSerializer
 
     # TODO: show commodity options in homepage
     def get_queryset(self):
-        queryset = []
+        queryset = Order.objects.none()
         if self.lookup_url_kwarg in self.kwargs:
             contract_code = self.kwargs[self.lookup_url_kwarg]
             bid = Order.bidask.bid(contract_code=contract_code)
             ask = Order.bidask.ask(contract_code=contract_code)
             if bid and ask:
                 queryset = [bid, ask]
-            else:
-                queryset = Order.objects.none()
         return queryset
 
     def list(self, request, *args, **kwargs):
-        if self.lookup_url_kwarg in self.kwargs:
-            serializer = self.get_serializer(self.get_queryset(), many=True)
-            return Response(serializer.data)
-        else:
-            serializer = CommoditiesSerializer(Order.objects.none(), context={'request': request})
-            return Response(serializer.data)
+        serializer = CommoditiesSerializer(Order.objects.none(), context={'request': request})
+        return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        serializer = self.get_serializer(self.get_queryset(), many=True)
+        return Response(serializer.data)

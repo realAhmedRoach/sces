@@ -2,8 +2,8 @@ from rest_framework import serializers
 from rest_framework.reverse import reverse
 
 from apps.salam.models import Order
-from commodity import get_valid_contracts
-from validators import validate_contract_code
+from sces.commodity import get_valid_contracts
+from apps.salam.validators import validate_contract_code
 
 
 class CurrentUserPartyDefault:

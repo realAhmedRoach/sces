@@ -31,7 +31,18 @@ class OrderAdmin(ModelAdmin):
             return []
 
 
+class TransactionAdmin(ModelAdmin):
+    list_display = ['commodity', 'contract', 'quantity', 'price', 'fill_time']
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ['long_party', 'short_party']
+        else:
+            return []
+
+
 admin.site.register(ExchangeUser, ExchangeUserAdmin)
 
 admin.site.register(Party, PartyAdmin)
 admin.site.register(Order, OrderAdmin)
+admin.site.register(Transaction, TransactionAdmin)

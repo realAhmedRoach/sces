@@ -1,7 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
-from commodity import get_commodity_choices
+from sces.commodity import get_commodity_choices
 
 
 def validate_contract_code(value):
