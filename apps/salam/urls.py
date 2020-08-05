@@ -12,6 +12,7 @@ router.get_api_root_view().cls.__doc__ = 'View/create orders or view current bid
 
 router.register(r'orderbook', views.OrderViewSet, basename='order')
 router.register(r'bidask', views.BidAskViewSet, basename='bidask')
+router.register(r'price', views.PriceViewSet, basename='price')
 # router.register(r'bidask/(?P<commodity>.+)', views.BidAskViewSet, basename='bidask')
 
 urlpatterns = [

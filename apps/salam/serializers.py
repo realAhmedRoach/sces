@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
-from apps.salam.models import Order
+from apps.salam.models import Order, Transaction
 from sces.commodity import get_valid_contracts
 from apps.salam.validators import validate_contract_code
 
@@ -45,10 +45,13 @@ class BidAskSerializer(serializers.ModelSerializer):
 class CommoditiesSerializer(serializers.ModelSerializer):
     commodities = serializers.SerializerMethodField()
 
+    def __init__(self, *args, **kwargs):
+        super(CommoditiesSerializer, self).__init__(*args, **kwargs)
+
     def get_commodities(self, obj):
         choices = [choice for choice in Order._meta.get_field('commodity').choices]
         contracts = [contract for contract in Order._meta.get_field('contract').choices]
-        baseurl = reverse('bidask-list', request=self.context['request'])
+        baseurl = reverse(self.context['view'], request=self.context['request'])
         choice_urls = {choice[1]: {
             contract[1]: '%s%s%s' % (baseurl, choice[0], contract[0]) for contract in contracts
         } for choice in choices}
@@ -57,3 +60,9 @@ class CommoditiesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['commodities']
+
+
+class PriceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = ['fill_time', 'commodity', 'contract', 'price']

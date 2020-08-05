@@ -43,11 +43,11 @@ class BidAskManager(models.Manager):
             quantity_unfilled=F('quantity') - F('quantity_filled'))
 
     def bid(self, contract_code):
-        return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='BUY')\
+        return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='BUY') \
             .order_by('price', '-order_time').first()
 
     def ask(self, contract_code):
-        return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='SELL')\
+        return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='SELL') \
             .order_by('-price', '-order_time').first()
 
 
@@ -80,6 +80,11 @@ class Order(models.Model):
         ordering = ['-order_time']
 
 
+class PriceManager(models.Manager):
+    def current_price(self, contract_code):
+        return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:]).first()
+
+
 class Transaction(models.Model):
     uid = models.UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     long_party = models.ForeignKey(verbose_name='Long Party', to=Party, on_delete=models.CASCADE,
@@ -91,6 +96,8 @@ class Transaction(models.Model):
     contract = models.CharField(verbose_name='Contract', max_length=4, validators=[validate_contract_code])
     price = models.DecimalField(verbose_name='Price', max_digits=7, decimal_places=4)
     quantity = models.PositiveIntegerField(verbose_name='Quantity')
+
+    transactions = PriceManager()
 
     def __str__(self):
         return '%sx%s%s@%s (%s)' % (self.quantity, self.commodity, self.contract, self.price, self.fill_time)
