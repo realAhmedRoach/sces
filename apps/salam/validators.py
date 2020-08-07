@@ -8,3 +8,6 @@ def validate_contract_code(value):
     choices = [choice[0] for choice in get_valid_contracts()]
     if value not in choices:
         raise ValidationError(_('This is not a valid contract code. Here are the valid codes: ') + str(choices))
+
+
+# TODO: Price order validators, must be within range of market price

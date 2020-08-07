@@ -66,6 +66,7 @@ class Order(models.Model):
     side = models.CharField(verbose_name='Trade Side', max_length=4, choices=TRADE_SIDES)
     order_type = models.CharField(verbose_name='Order Type', max_length=4, choices=ORDER_TYPES,
                                   default=ORDER_TYPES[0][0])
+    fill_in_one = models.BooleanField(verbose_name='Fill In One', default=False)
     quantity_filled = models.PositiveIntegerField(verbose_name='Quantity Filled', default=0)
 
     objects = models.Manager()
