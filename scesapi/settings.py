@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_q',
     'rest_framework',
     'apps.salam.apps.SalamConfig'
 ]
@@ -126,4 +127,8 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ]
+}
+
+Q_CLUSTER = {
+    'name': 'scesapi'
 }
