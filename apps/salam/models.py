@@ -36,16 +36,19 @@ class WarehouseReceipt(models.Model):
 
 class BidAskManager(models.Manager):
     def get_queryset(self):
-        return super(BidAskManager, self).get_queryset().filter(quantity_filled__lt=F('quantity')).annotate(
-            quantity_unfilled=F('quantity') - F('quantity_filled'))
+        return super(BidAskManager, self).get_queryset().filter(quantity_filled__lt=F('quantity'))
 
-    def bid(self, contract_code):
-        return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='BUY') \
-            .order_by('price', 'order_time').first()
+    def bids(self, contract_code):
+        return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='BUY')
 
-    def ask(self, contract_code):
-        return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='SELL') \
-            .order_by('-price', 'order_time').first()
+    def asks(self, contract_code):
+        return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='SELL')
+
+    def best_bid(self, contract_code):
+        return self.bids(contract_code).order_by('price', 'order_time').first()
+
+    def best_ask(self, contract_code):
+        return self.asks(contract_code).order_by('-price', 'order_time').first()
 
 
 class Order(models.Model):
@@ -69,6 +72,10 @@ class Order(models.Model):
     @property
     def filled(self):
         return self.quantity_filled == self.quantity
+
+    @property
+    def quantity_unfilled(self):
+        return F('quantity') - F('quantity_filled')
 
     objects = models.Manager()
     bidask = BidAskManager()
