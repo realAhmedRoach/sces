@@ -8,22 +8,19 @@ from apps.salam.validators import validate_contract_code
 
 
 class ExchangeUser(AbstractUser):
-    party = models.ForeignKey(verbose_name='Party', to='Party', on_delete=models.CASCADE, null=True)
+    firm = models.ForeignKey(verbose_name='Firm', to='Firm', on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return self.username
 
 
-class Party(models.Model):
+class Firm(models.Model):
     uid = models.UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     symbol = models.CharField(verbose_name='Symbol', max_length=4, unique=True)
     name = models.CharField(verbose_name='Name', max_length=120, unique=True)
 
     def __str__(self):
-        return '%s - %s' % (self.symbol, self.name)
-
-    class Meta:
-        verbose_name_plural = 'Parties'
+        return f'<${self.symbol}> ${self.name}'
 
 
 class WarehouseReceipt(models.Model):
@@ -31,10 +28,10 @@ class WarehouseReceipt(models.Model):
     created_time = models.DateTimeField(verbose_name='Created Time', auto_now_add=True)
     commodity = models.CharField(verbose_name='Commodity', max_length=2, choices=get_commodity_choices())
     quantity = models.PositiveIntegerField(verbose_name='Quantity')
-    party = models.ForeignKey(verbose_name='Party', to='Party', on_delete=models.CASCADE)
+    firm = models.ForeignKey(verbose_name='Firm', to='Firm', on_delete=models.CASCADE)
 
     def __str__(self):
-        return '<%s> %s%s @%s' % (self.party, self.quantity, self.commodity, self.created_time)
+        return f'<{self.firm}> {self.quantity} {self.commodity} ({self.created_time})'
 
 
 class BidAskManager(models.Manager):
@@ -44,11 +41,11 @@ class BidAskManager(models.Manager):
 
     def bid(self, contract_code):
         return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='BUY') \
-            .order_by('price', '-order_time').first()
+            .order_by('price', 'order_time').first()
 
     def ask(self, contract_code):
         return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='SELL') \
-            .order_by('-price', '-order_time').first()
+            .order_by('-price', 'order_time').first()
 
 
 class Order(models.Model):
@@ -56,10 +53,10 @@ class Order(models.Model):
     ORDER_TYPES = (('MRKT', 'Market'), ('LMT', 'Limit'))
 
     uid = models.UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
-    party = models.ForeignKey(verbose_name='Party', to=Party, on_delete=models.CASCADE, null=True)
+    firm = models.ForeignKey(verbose_name='Firm', to='Firm', on_delete=models.CASCADE, null=True)
     order_time = models.DateTimeField(verbose_name='Order Time', auto_now_add=True)
-    commodity = models.CharField(verbose_name='Commodity', max_length=2, choices=get_commodity_choices())
     quantity = models.PositiveIntegerField(verbose_name='Quantity')
+    commodity = models.CharField(verbose_name='Commodity', max_length=2, choices=get_commodity_choices())
     contract = models.CharField(verbose_name='Contract', max_length=4, choices=get_valid_contracts(),
                                 validators=[validate_contract_code])
     price = models.DecimalField(verbose_name='Price', max_digits=7, decimal_places=4)
@@ -69,16 +66,20 @@ class Order(models.Model):
     fill_in_one = models.BooleanField(verbose_name='Fill In One', default=False)
     quantity_filled = models.PositiveIntegerField(verbose_name='Quantity Filled', default=0)
 
+    @property
+    def filled(self):
+        return self.quantity_filled == self.quantity
+
     objects = models.Manager()
     bidask = BidAskManager()
 
     def __str__(self):
-        symbol = self.party.symbol if self.party else 'NONE'
-        return '<%s> %s %s%s (%s)' % (symbol, self.side, self.commodity, self.contract, self.order_time)
+        symbol = self.firm.symbol if self.firm else 'NONE'
+        return f'<{symbol}> {self.side} {self.commodity}{self.contract} ({self.order_time})'
 
     class Meta:
         get_latest_by = 'order_time'
-        ordering = ['-order_time']
+        ordering = ['order_time']
 
 
 class PriceManager(models.Manager):
@@ -88,20 +89,20 @@ class PriceManager(models.Manager):
 
 class Transaction(models.Model):
     uid = models.UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
-    long_party = models.ForeignKey(verbose_name='Long Party', to=Party, on_delete=models.CASCADE,
-                                   related_name='long_party')
-    short_party = models.ForeignKey(verbose_name='Short Party', to=Party, on_delete=models.CASCADE,
-                                    related_name='short_party')
+    long_firm = models.ForeignKey(verbose_name='Long Firm', to='Firm', on_delete=models.CASCADE,
+                                  related_name='long_firm')
+    short_firm = models.ForeignKey(verbose_name='Short Firm', to='Firm', on_delete=models.CASCADE,
+                                   related_name='short_firm')
     fill_time = models.DateTimeField(verbose_name='Fill Time', auto_now_add=True)
     commodity = models.CharField(verbose_name='Commodity', max_length=2, choices=get_commodity_choices())
     contract = models.CharField(verbose_name='Contract', max_length=4, validators=[validate_contract_code])
-    price = models.DecimalField(verbose_name='Price', max_digits=7, decimal_places=4)
+    price = models.DecimalField(verbose_name='Price', max_digits=8, decimal_places=3)
     quantity = models.PositiveIntegerField(verbose_name='Quantity')
 
     transactions = PriceManager()
 
     def __str__(self):
-        return '%sx%s%s@%s (%s)' % (self.quantity, self.commodity, self.contract, self.price, self.fill_time)
+        return f'{self.quantity}x{self.commodity}{self.contract}@{self.price} ({self.fill_time})'
 
     class Meta:
         get_latest_by = 'fill_time'

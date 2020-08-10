@@ -22,7 +22,7 @@ class OrderViewSet(mixins.CreateModelMixin,
     lookup_field = 'uid'
 
     def get_queryset(self):
-        return Order.objects.filter(party=self.request.user.party)
+        return Order.objects.filter(firm=self.request.user.firm)
 
     def options(self, request, *args, **kwargs):
         """

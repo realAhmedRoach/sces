@@ -10,7 +10,7 @@ class CurrentUserPartyDefault:
     requires_context = True
 
     def __call__(self, serializer_field):
-        return serializer_field.context['request'].user.party
+        return serializer_field.context['request'].user.firm
 
     def __repr__(self):
         return '%s()' % self.__class__.__name__
@@ -20,7 +20,7 @@ class OrderSerializer(serializers.ModelSerializer):
     party = serializers.HiddenField(default=CurrentUserPartyDefault())
 
     def update(self, instance, validated_data):
-        validated_data.pop('party')
+        validated_data.pop('firm')
         return super(OrderSerializer, self).update(instance, validated_data)
 
     def create(self, validated_data):

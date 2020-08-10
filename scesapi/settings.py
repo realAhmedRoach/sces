@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_q',
     'rest_framework',
-    'apps.salam.apps.SalamConfig'
+    'apps.salam.apps.SalamConfig',
 ]
 
 MIDDLEWARE = [

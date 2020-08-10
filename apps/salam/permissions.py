@@ -16,9 +16,9 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
         if request.user.is_staff:
             return True
 
-        # if party is none, party is deleted or unknown, no access allowed
-        if not obj.party_id:
+        # if firm is none, firm is deleted or unknown, no access allowed
+        if not obj.firm_id:
             return False
 
-        # Write permissions are only allowed to the party who made the order
-        return obj.party_id == request.user.party_id
+        # Write permissions are only allowed to the firm who made the order
+        return obj.firm_id == request.user.firm_id

@@ -9,7 +9,7 @@ def get_market_price(contract_code):
 def create_transaction(long_order: Order, short_order: Order, trade_price=None, save=True) -> Transaction:
     assert long_order.side == 'BUY'
     assert short_order.side == 'SELL'
-    assert long_order.party != short_order.party
+    assert long_order.firm != short_order.firm
     assert long_order.commodity == short_order.commodity
     assert long_order.contract == short_order.contract
     first = long_order if long_order.order_time < short_order.order_time else short_order
@@ -40,7 +40,7 @@ def create_transaction(long_order: Order, short_order: Order, trade_price=None, 
     else:
         assert long_order.price <= short_order.price  # if they are both limit orders, they both must be in range
         price = first.price
-    transaction = Transaction(long_party=long_order.party, short_party=short_order.party,
+    transaction = Transaction(long_party=long_order.firm, short_party=short_order.firm,
                               commodity=long_order.commodity, contract=long_order.contract, price=price,
                               quantity=quantity)
     if save:

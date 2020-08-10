@@ -6,11 +6,11 @@ class ExchangeUserCreationForm(UserCreationForm):
 
     class Meta:
         model = ExchangeUser
-        fields = ('party',)
+        fields = ('firm',)
 
 
 class ExchangeUserChangeForm(UserChangeForm):
 
     class Meta:
         model = ExchangeUser
-        fields = ('party',)
+        fields = ('firm',)
