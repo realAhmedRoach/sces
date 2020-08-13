@@ -23,6 +23,8 @@ CONTRACT_MONTHS = [
     ('Z', 'Dec'),
 ]
 
+CONTRACT_CODES = [month[0] for month in CONTRACT_MONTHS]
+
 
 class Commodity(Enum):
     @property
@@ -106,3 +108,17 @@ def get_valid_contracts():
                 year += 1
 
     return contracts
+
+
+def get_delivery_date(contract: str):
+    """
+    Gets the range of delivery dates for a given contract string
+
+    :rtype (first_delivery_date, last_delivery_date)
+    """
+    month = CONTRACT_CODES.index(contract[0])
+    year = int('20' + contract[-2:])
+    first_delivery_date = datetime(year=year, month=month, day=1)
+    last_delivery_date = datetime(year=year, month=month, day=15)
+
+    return first_delivery_date, last_delivery_date

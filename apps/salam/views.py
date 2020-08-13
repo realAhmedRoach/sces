@@ -43,8 +43,8 @@ class BidAskViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericVie
         queryset = Order.objects.none()
         if self.lookup_url_kwarg in self.kwargs:
             contract_code = self.kwargs[self.lookup_url_kwarg]
-            bid = Order.bidask.bid(contract_code=contract_code)
-            ask = Order.bidask.ask(contract_code=contract_code)
+            bid = Order.bidask.best_bid(contract_code=contract_code)
+            ask = Order.bidask.best_ask(contract_code=contract_code)
             if bid and ask:
                 queryset = [bid, ask]
         return queryset

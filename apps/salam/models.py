@@ -39,10 +39,12 @@ class BidAskManager(models.Manager):
         return super(BidAskManager, self).get_queryset().filter(quantity_filled__lt=F('quantity'))
 
     def bids(self, contract_code):
-        return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='BUY')
+        return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='BUY',
+                                          order_type='LMT')
 
     def asks(self, contract_code):
-        return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='SELL')
+        return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='SELL',
+                                          order_type='LMT')
 
     def best_bid(self, contract_code):
         return self.bids(contract_code).order_by('price', 'order_time').first()

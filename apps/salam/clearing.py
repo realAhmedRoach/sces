@@ -1,4 +1,4 @@
-from apps.salam.models import Order, Transaction
+from apps.salam.models import Order, Transaction, WarehouseReceipt
 
 
 def match_order(order: Order):
@@ -51,3 +51,19 @@ def match_order(order: Order):
                 order.delete()
             else:
                 match_order(order)
+
+
+def deliver(trans_id: str):
+    trans = Transaction.objects.get(uid=trans_id)
+    long_firm = trans.long_firm
+    short_firm = trans.short_firm
+
+    warehouse_receipt = WarehouseReceipt.objects.get(firm=short_firm, commodity=trans.commodity,
+                                                     quantity=trans.quantity)
+
+    if warehouse_receipt:
+        warehouse_receipt.firm = long_firm
+        warehouse_receipt.save()
+
+    # TODO: error handling
+    # TODO: splitting receipts
