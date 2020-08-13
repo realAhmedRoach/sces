@@ -24,6 +24,6 @@ def bank_transfer(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Transaction)
 def schedule_delivery(sender, instance: Transaction, **kwargs):
-    delivery_date = get_delivery_date(instance.contract)[0] # get first delivery date for simplicity
+    delivery_date = get_delivery_date(instance.contract)[0]  # get first delivery date for simplicity
     schedule('apps.salam.clearing.delivery', instance.uid, next_run=delivery_date)
     pass
