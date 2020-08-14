@@ -1,12 +1,13 @@
-from django.contrib.auth.models import AbstractUser
-from django.core.exceptions import ValidationError
-from django.utils.translation import gettext_lazy as _
-from django.db import models
-from django.db.models import F
 import uuid
 
-from sces.commodity import get_commodity_choices, get_valid_contracts
+from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.db.models import F
+from django.utils.translation import gettext_lazy as _
+
 from apps.salam.validators import validate_contract_code, validate_is_warehouse
+from sces.commodity import get_commodity_choices, get_valid_contracts
 
 
 class ExchangeUser(AbstractUser):
@@ -45,6 +46,11 @@ class WarehouseReceipt(models.Model):
     def __str__(self):
         return f'<{self.firm}> {self.quantity} {self.commodity} ({self.created_time})'
 
+    class Meta:
+        constraints = [
+            models.CheckConstraint(check=models.Q(firm_id=F('warehouse')), name='firm_ne_warehouse')
+        ]
+
 
 class BidAskManager(models.Manager):
     def get_queryset(self):
@@ -58,10 +64,14 @@ class BidAskManager(models.Manager):
         return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:], side='SELL',
                                           order_type='LMT')
 
-    def best_bid(self, contract_code):
+    def best_bid(self, contract_code, caller=None):
+        if caller:
+            self.bids(contract_code).exclude(firm=caller.firm).order_by('price', 'order_time').first()
         return self.bids(contract_code).order_by('price', 'order_time').first()
 
-    def best_ask(self, contract_code):
+    def best_ask(self, contract_code, caller):
+        if caller:
+            self.asks(contract_code).exclude(firm=caller.firm).order_by('-price', 'order_time').first()
         return self.asks(contract_code).order_by('-price', 'order_time').first()
 
 

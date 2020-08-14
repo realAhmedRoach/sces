@@ -10,7 +10,7 @@ def match_order(order: Order):
     to_fill = order.quantity_unfilled
 
     if order.side == 'BUY':
-        best_ask: Order = Order.bidask.best_ask(contract_code=contract_code)
+        best_ask: Order = Order.bidask.best_ask(contract_code=contract_code, caller=order)
         if not best_ask:
             return
         crossed_spread = order.order_type == 'MKT' or order.price >= best_ask.price
@@ -31,7 +31,7 @@ def match_order(order: Order):
             else:
                 match_order(order)
     elif order.side == 'SELL':
-        best_bid: Order = Order.bidask.best_bid(contract_code=contract_code)
+        best_bid: Order = Order.bidask.best_bid(contract_code=contract_code, caller=order)
         if not best_bid:
             return
         crossed_spread = order.order_type == 'MKT' or order.price <= best_bid.price
@@ -63,6 +63,7 @@ def deliver(trans_id: str):
 
     if warehouse_receipt:
         warehouse_receipt.firm = long_firm
+        warehouse_receipt.full_clean()
         warehouse_receipt.save()
 
     # TODO: error handling
