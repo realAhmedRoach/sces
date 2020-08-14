@@ -1,10 +1,12 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
 from django.db import models
 from django.db.models import F
 import uuid
 
 from sces.commodity import get_commodity_choices, get_valid_contracts
-from apps.salam.validators import validate_contract_code
+from apps.salam.validators import validate_contract_code, validate_is_warehouse
 
 
 class ExchangeUser(AbstractUser):
@@ -15,12 +17,15 @@ class ExchangeUser(AbstractUser):
 
 
 class Firm(models.Model):
+    FIRM_TYPES = (('WRHS', 'Warehouse'), ('PROD', 'Producer'), ('CONS', 'Consumer'), ('TRAD', 'Trader'))
+
     uid = models.UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     symbol = models.CharField(verbose_name='Symbol', max_length=4, unique=True)
     name = models.CharField(verbose_name='Name', max_length=120, unique=True)
+    type = models.CharField(verbose_name='Type', max_length=4, choices=FIRM_TYPES)
 
     def __str__(self):
-        return f'<${self.symbol}> ${self.name}'
+        return f'<{self.symbol}> {self.name}'
 
 
 class WarehouseReceipt(models.Model):
@@ -28,7 +33,14 @@ class WarehouseReceipt(models.Model):
     created_time = models.DateTimeField(verbose_name='Created Time', auto_now_add=True)
     commodity = models.CharField(verbose_name='Commodity', max_length=2, choices=get_commodity_choices())
     quantity = models.PositiveIntegerField(verbose_name='Quantity')
-    firm = models.ForeignKey(verbose_name='Firm', to='Firm', on_delete=models.CASCADE)
+    firm = models.ForeignKey(verbose_name='Firm', to='Firm', related_name='firm', on_delete=models.CASCADE, null=True,
+                             blank=True)
+    warehouse = models.ForeignKey(verbose_name='Warehouse', to='Firm', related_name='warehouse',
+                                  on_delete=models.CASCADE, validators=[validate_is_warehouse])
+
+    def clean(self):
+        if self.firm == self.warehouse:
+            raise ValidationError(_('The warehouse cannot own a commodity in its own location'))
 
     def __str__(self):
         return f'<{self.firm}> {self.quantity} {self.commodity} ({self.created_time})'
@@ -64,7 +76,7 @@ class Order(models.Model):
     commodity = models.CharField(verbose_name='Commodity', max_length=2, choices=get_commodity_choices())
     contract = models.CharField(verbose_name='Contract', max_length=4, choices=get_valid_contracts(),
                                 validators=[validate_contract_code])
-    price = models.DecimalField(verbose_name='Price', max_digits=7, decimal_places=4)
+    price = models.DecimalField(verbose_name='Price', max_digits=8, decimal_places=3)
     side = models.CharField(verbose_name='Trade Side', max_length=4, choices=TRADE_SIDES)
     order_type = models.CharField(verbose_name='Order Type', max_length=4, choices=ORDER_TYPES,
                                   default=ORDER_TYPES[0][0])

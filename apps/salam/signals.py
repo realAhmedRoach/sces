@@ -4,7 +4,7 @@ from django_q.tasks import async_task, schedule
 
 from apps.salam.clearing import match_order
 from apps.salam.models import Order, Transaction
-from commodity import get_delivery_date
+from sces.commodity import get_delivery_date
 
 
 @receiver(post_save, sender=Order)

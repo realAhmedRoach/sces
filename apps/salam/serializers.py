@@ -1,12 +1,15 @@
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 from rest_framework.reverse import reverse
 
-from apps.salam.models import Order, Transaction
+from django.utils.translation import gettext_lazy as _
+
+from apps.salam.models import Order, Transaction, WarehouseReceipt
 from sces.commodity import get_valid_contracts
 from apps.salam.validators import validate_contract_code
 
 
-class CurrentUserPartyDefault:
+class CurrentUserFirmDefault:
     requires_context = True
 
     def __call__(self, serializer_field):
@@ -17,7 +20,7 @@ class CurrentUserPartyDefault:
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    party = serializers.HiddenField(default=CurrentUserPartyDefault())
+    firm = serializers.HiddenField(default=CurrentUserFirmDefault())
 
     def update(self, instance, validated_data):
         validated_data.pop('firm')
@@ -45,9 +48,6 @@ class BidAskSerializer(serializers.ModelSerializer):
 class CommoditiesSerializer(serializers.ModelSerializer):
     commodities = serializers.SerializerMethodField()
 
-    def __init__(self, *args, **kwargs):
-        super(CommoditiesSerializer, self).__init__(*args, **kwargs)
-
     def get_commodities(self, obj):
         choices = [choice for choice in Order._meta.get_field('commodity').choices]
         contracts = [contract for contract in Order._meta.get_field('contract').choices]
@@ -66,3 +66,27 @@ class PriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = ['fill_time', 'commodity', 'contract', 'price']
+
+
+class WarehouseReceiptDetailSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
+    def get_url(self, obj):
+        return reverse('warehouse-detail', args=[obj.uid], request=self.context['request'])
+
+    class Meta:
+        model = WarehouseReceipt
+        fields = '__all__'
+
+
+class WarehouseReceiptUpdateSerializer(serializers.ModelSerializer):
+    warehouse = serializers.HiddenField(default=CurrentUserFirmDefault())
+
+    def validate(self, attrs):
+        if attrs['firm'] == attrs['warehouse']:
+            raise ValidationError(_('The warehouse cannot own a commodity in its own location'))
+        return attrs
+
+    class Meta:
+        model = WarehouseReceipt
+        fields = '__all__'

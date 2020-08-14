@@ -3,27 +3,20 @@ from rest_framework import permissions, mixins, status
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from apps.salam.models import Order, Transaction
-from apps.salam.permissions import IsOwnerOrReadOnly
-from apps.salam.serializers import OrderSerializer, BidAskSerializer, CommoditiesSerializer, PriceSerializer
+from apps.salam.models import Order, Transaction, WarehouseReceipt
+from apps.salam.permissions import IsOwner, WarehousePermissions
+from apps.salam.serializers import OrderSerializer, BidAskSerializer, CommoditiesSerializer, PriceSerializer, \
+    WarehouseReceiptDetailSerializer, WarehouseReceiptUpdateSerializer
 
 
 def index(request):
     return HttpResponse('<a href="/api">API</a> - <a href="/admin">Admin</a>')
 
 
-class OrderViewSet(mixins.CreateModelMixin,
-                   mixins.RetrieveModelMixin,
-                   mixins.DestroyModelMixin,
-                   mixins.ListModelMixin,
-                   GenericViewSet):
-    serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
-    lookup_field = 'uid'
-
-    def get_queryset(self):
-        return Order.objects.filter(firm=self.request.user.firm)
-
+class NoDescriptionMixin:
+    """
+    Don't show view description in OPTIONS responses
+    """
     def options(self, request, *args, **kwargs):
         """
         Don't include the view description in OPTIONS responses.
@@ -34,20 +27,30 @@ class OrderViewSet(mixins.CreateModelMixin,
         return Response(data, status=status.HTTP_200_OK)
 
 
+class OrderViewSet(mixins.CreateModelMixin,
+                   mixins.RetrieveModelMixin,
+                   mixins.DestroyModelMixin,
+                   mixins.ListModelMixin,
+                   NoDescriptionMixin,
+                   GenericViewSet):
+    serializer_class = OrderSerializer
+    permission_classes = [IsOwner]
+    lookup_field = 'uid'
+    queryset = Order.objects.all()
+
+
 class BidAskViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericViewSet):
     lookup_field = 'commodity'
     lookup_url_kwarg = 'commodity'
     serializer_class = BidAskSerializer
 
     def get_queryset(self):
-        queryset = Order.objects.none()
         if self.lookup_url_kwarg in self.kwargs:
             contract_code = self.kwargs[self.lookup_url_kwarg]
             bid = Order.bidask.best_bid(contract_code=contract_code)
             ask = Order.bidask.best_ask(contract_code=contract_code)
             if bid and ask:
-                queryset = [bid, ask]
-        return queryset
+                return [bid, ask]
 
     def list(self, request, *args, **kwargs):
         serializer = CommoditiesSerializer(Order.objects.none(), context={'request': request, 'view': 'bidask-list'})
@@ -81,3 +84,21 @@ class PriceViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericView
             return Response(serializer.data)
         else:
             return Response([])
+
+
+class WarehouseReceiptViewSet(mixins.CreateModelMixin,
+                              mixins.RetrieveModelMixin,
+                              mixins.DestroyModelMixin,
+                              mixins.ListModelMixin,
+                              mixins.UpdateModelMixin,
+                              NoDescriptionMixin,
+                              GenericViewSet):
+    lookup_field = 'uid'
+    permission_classes = (WarehousePermissions,)
+    queryset = WarehouseReceipt.objects.all()
+
+    def get_serializer_class(self):
+        if self.action in ['retrieve', 'list']:
+            return WarehouseReceiptDetailSerializer
+        else:
+            return WarehouseReceiptUpdateSerializer
