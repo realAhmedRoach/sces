@@ -48,7 +48,7 @@ class WarehouseReceipt(models.Model):
 
     class Meta:
         constraints = [
-            models.CheckConstraint(check=models.Q(firm_id=F('warehouse')), name='firm_ne_warehouse')
+            models.CheckConstraint(check=models.Q(firm=F('warehouse')), name='firm_ne_warehouse')
         ]
 
 
@@ -82,11 +82,11 @@ class Order(models.Model):
     uid = models.UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     firm = models.ForeignKey(verbose_name='Firm', to='Firm', on_delete=models.CASCADE, null=True)
     order_time = models.DateTimeField(verbose_name='Order Time', auto_now_add=True)
-    quantity = models.PositiveIntegerField(verbose_name='Quantity')
     commodity = models.CharField(verbose_name='Commodity', max_length=2, choices=get_commodity_choices())
     contract = models.CharField(verbose_name='Contract', max_length=4, choices=get_valid_contracts(),
                                 validators=[validate_contract_code])
     price = models.DecimalField(verbose_name='Price', max_digits=8, decimal_places=3)
+    quantity = models.PositiveIntegerField(verbose_name='Quantity')
     side = models.CharField(verbose_name='Trade Side', max_length=4, choices=TRADE_SIDES)
     order_type = models.CharField(verbose_name='Order Type', max_length=4, choices=ORDER_TYPES,
                                   default=ORDER_TYPES[0][0])

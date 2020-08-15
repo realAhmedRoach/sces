@@ -1,15 +1,17 @@
+from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.reverse import reverse
 
-from django.utils.translation import gettext_lazy as _
-
 from apps.salam.models import Order, Transaction, WarehouseReceipt
-from sces.commodity import get_valid_contracts
 from apps.salam.validators import validate_contract_code
+from sces.commodity import get_valid_contracts
 
 
 class CurrentUserFirmDefault:
+    """
+    A field default which returns the current users firm
+    """
     requires_context = True
 
     def __call__(self, serializer_field):
@@ -22,20 +24,13 @@ class CurrentUserFirmDefault:
 class OrderSerializer(serializers.ModelSerializer):
     firm = serializers.HiddenField(default=CurrentUserFirmDefault())
 
-    def update(self, instance, validated_data):
-        validated_data.pop('firm')
-        return super(OrderSerializer, self).update(instance, validated_data)
-
-    def create(self, validated_data):
-        return super(OrderSerializer, self).create(validated_data)
-
     def validate_contract(self, value):
         validate_contract_code(value)
         return value
 
     class Meta:
         model = Order
-        fields = '__all__'
+        exclude = ['quantity_filled']
         extra_kwargs = {'contract': {'choices': get_valid_contracts()}}
 
 
@@ -46,9 +41,13 @@ class BidAskSerializer(serializers.ModelSerializer):
 
 
 class CommoditiesSerializer(serializers.ModelSerializer):
+    """
+    Serializes all commodities and available contracts
+    """
     commodities = serializers.SerializerMethodField()
 
     def get_commodities(self, obj):
+        # TODO: choices will possibly be no longer available for contracts
         choices = [choice for choice in Order._meta.get_field('commodity').choices]
         contracts = [contract for contract in Order._meta.get_field('contract').choices]
         baseurl = reverse(self.context['view'], request=self.context['request'])

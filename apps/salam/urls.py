@@ -1,8 +1,6 @@
-from django.contrib import admin
+from django.conf.urls import include
 from django.urls import path
 from rest_framework.routers import DefaultRouter
-from django.conf.urls import include
-
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -16,7 +14,7 @@ router = DefaultRouter()
 router.get_api_root_view().cls.__name__ = 'Commodity Exchange'
 router.get_api_root_view().cls.__doc__ = 'View/create orders or view current bid/ask'
 
-router.register(r'orderbook', views.OrderViewSet, basename='order')
+router.register(r'order', views.OrderViewSet, basename='order')
 router.register(r'bidask', views.BidAskViewSet, basename='bidask')
 router.register(r'price', views.PriceViewSet, basename='price')
 router.register(r'warehouse', views.WarehouseReceiptViewSet, basename='warehouse')
