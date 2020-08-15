@@ -67,12 +67,12 @@ class BidAskManager(models.Manager):
     def best_bid(self, contract_code, caller=None):
         if caller:
             self.bids(contract_code).exclude(firm=caller.firm).order_by('price', 'order_time').first()
-        return self.bids(contract_code).order_by('price', 'order_time').first()
+        return self.bids(contract_code).order_by('-price', 'order_time').first()
 
-    def best_ask(self, contract_code, caller):
+    def best_ask(self, contract_code, caller=None):
         if caller:
             self.asks(contract_code).exclude(firm=caller.firm).order_by('-price', 'order_time').first()
-        return self.asks(contract_code).order_by('-price', 'order_time').first()
+        return self.asks(contract_code).order_by('price', 'order_time').first()
 
 
 class Order(models.Model):
