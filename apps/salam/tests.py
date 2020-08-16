@@ -1,10 +1,11 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
 
 from apps.salam.models import ExchangeUser, Order, Firm
 
 
-class BidAskTestCase(TestCase):
+@override_settings(Q_CLUSTER={'sync': True})
+class APITestCase(TestCase):
 
     def setUp(self):
         self.warehouse = Firm.objects.create(symbol='TSW', name='Test Warehouse', type='WRHS')
@@ -30,8 +31,4 @@ class BidAskTestCase(TestCase):
         response = self.client.get('/api/bidask/CLZ20/')
         self.assertEquals(float(response.data[0]['price']), 40.0)
         self.assertEquals(float(response.data[1]['price']), 40.0)
-
-
-class OrderBookTestCase(TestCase):
-    pass
 

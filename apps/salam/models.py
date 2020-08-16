@@ -99,7 +99,7 @@ class Order(models.Model):
 
     @property
     def quantity_unfilled(self):
-        return F('quantity') - F('quantity_filled')
+        return self.quantity - self.quantity_filled
 
     objects = models.Manager()
     bidask = BidAskManager()

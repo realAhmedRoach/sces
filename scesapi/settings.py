@@ -137,5 +137,5 @@ REST_FRAMEWORK = {
 }
 
 Q_CLUSTER = {
-    'name': 'scesapi'
+    'name': 'scesapi',
 }
