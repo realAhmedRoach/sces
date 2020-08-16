@@ -1,10 +1,11 @@
 from django.test import TestCase, override_settings
+from django.urls import reverse
 from rest_framework.test import APIClient
 
 from apps.salam.models import ExchangeUser, Order, Firm
 
 
-@override_settings(Q_CLUSTER={'sync': True})
+@override_settings(Q_CLUSTER={'name': 'scesapi-test', 'sync': True}, SUSPEND_SIGNALS=True)
 class APITestCase(TestCase):
 
     def setUp(self):
@@ -28,7 +29,10 @@ class APITestCase(TestCase):
                              side='SELL', price=41)
 
     def test_get_bid_ask(self):
-        response = self.client.get('/api/bidask/CLZ20/')
+        response = self.client.get(reverse('bidask-list') + 'CLZ20/')
         self.assertEquals(float(response.data[0]['price']), 40.0)
         self.assertEquals(float(response.data[1]['price']), 40.0)
 
+    def test_get_all_orders(self):
+        response = self.client.get(reverse('order-list'))
+        self.assertEquals(len(response.data), 4)
