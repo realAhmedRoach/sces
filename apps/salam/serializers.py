@@ -21,7 +21,7 @@ class CurrentUserFirmDefault:
         return '%s()' % self.__class__.__name__
 
 
-class OrderSerializer(serializers.ModelSerializer):
+class OrderUpdateSerializer(serializers.ModelSerializer):
     firm = serializers.HiddenField(default=CurrentUserFirmDefault())
 
     def validate_contract(self, value):
@@ -31,6 +31,13 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         exclude = ['quantity_filled']
+        extra_kwargs = {'contract': {'choices': get_valid_contracts()}}
+
+
+class OrderDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        exclude = ['firm']
         extra_kwargs = {'contract': {'choices': get_valid_contracts()}}
 
 

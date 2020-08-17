@@ -29,6 +29,11 @@ class Firm(models.Model):
         return f'<{self.symbol}> {self.name}'
 
 
+class WarehouseReceiptManager(models.Manager):
+    def get_filtered_queryset(self, firm: Firm):
+        return self.get_queryset().filter(models.Q(firm=firm) | models.Q(warehouse=firm))
+
+
 class WarehouseReceipt(models.Model):
     uid = models.UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     created_time = models.DateTimeField(verbose_name='Created Time', auto_now_add=True)
@@ -38,6 +43,8 @@ class WarehouseReceipt(models.Model):
                              blank=True)
     warehouse = models.ForeignKey(verbose_name='Warehouse', to='Firm', related_name='warehouse',
                                   on_delete=models.CASCADE, validators=[validate_is_warehouse])
+
+    receipts = WarehouseReceiptManager()
 
     def clean(self):
         if self.firm == self.warehouse:

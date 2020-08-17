@@ -1,12 +1,11 @@
 from django.http import HttpResponse
-from rest_framework import permissions, mixins, status
+from rest_framework import mixins, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from apps.salam.models import Order, Transaction, WarehouseReceipt
 from apps.salam.permissions import IsOwner, WarehousePermissions
-from apps.salam.serializers import OrderSerializer, BidAskSerializer, CommoditiesSerializer, PriceSerializer, \
-    WarehouseReceiptDetailSerializer, WarehouseReceiptUpdateSerializer
+from apps.salam.serializers import *
 
 
 def index(request):
@@ -17,6 +16,7 @@ class NoDescriptionMixin:
     """
     Don't show view description in OPTIONS responses
     """
+
     def options(self, request, *args, **kwargs):
         """
         Don't include the view description in OPTIONS responses.
@@ -33,10 +33,17 @@ class OrderViewSet(mixins.CreateModelMixin,
                    mixins.ListModelMixin,
                    NoDescriptionMixin,
                    GenericViewSet):
-    serializer_class = OrderSerializer
-    permission_classes = [IsOwner]
+    permission_classes = (IsAuthenticated, IsOwner,)
     lookup_field = 'uid'
-    queryset = Order.objects.all()
+
+    def get_queryset(self):
+        return Order.objects.filter(firm=self.request.user.firm)
+
+    def get_serializer_class(self):
+        if self.action in ['retrieve', 'list']:
+            return OrderDetailSerializer
+        else:
+            return OrderUpdateSerializer
 
 
 class BidAskViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericViewSet):
@@ -95,7 +102,9 @@ class WarehouseReceiptViewSet(mixins.CreateModelMixin,
                               GenericViewSet):
     lookup_field = 'uid'
     permission_classes = (WarehousePermissions,)
-    queryset = WarehouseReceipt.objects.all()
+
+    def get_queryset(self):
+        return WarehouseReceipt.receipts.get_filtered_queryset(self.request.user.firm)
 
     def get_serializer_class(self):
         if self.action in ['retrieve', 'list']:

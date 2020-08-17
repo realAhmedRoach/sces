@@ -139,3 +139,5 @@ REST_FRAMEWORK = {
 Q_CLUSTER = {
     'name': 'scesapi',
 }
+
+SUSPEND_SIGNALS = True
