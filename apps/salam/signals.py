@@ -11,6 +11,10 @@ from sces.commodity import get_delivery_date
 
 
 def suspendingreceiver(signal, **decorator_kwargs):
+    """
+    Decorator that suspends receiver if settings.SUSPEND_SIGNALS is true
+    """
+
     def suspend_wrapper(func):
         @receiver(signal, **decorator_kwargs)
         @functools.wraps(func)
@@ -27,7 +31,7 @@ def suspendingreceiver(signal, **decorator_kwargs):
 @suspendingreceiver(post_save, sender=Order)
 def send_order_to_engine(sender, instance, **kwargs):
     for order in Order.objects.all():
-        if order.filled:
+        if order and order.filled:
             order.delete()
         else:
             async_task(match_order, order, sync=True)

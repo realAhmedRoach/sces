@@ -1,3 +1,4 @@
+from django.db.models import QuerySet
 from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -5,7 +6,7 @@ from rest_framework.reverse import reverse
 
 from apps.salam.models import Order, Transaction, WarehouseReceipt
 from apps.salam.validators import validate_contract_code
-from sces.commodity import get_valid_contracts
+from commodity import get_valid_contracts
 
 
 class CurrentUserFirmDefault:
@@ -35,43 +36,50 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
 
 
 class OrderDetailSerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        super(OrderDetailSerializer, self).__init__(*args, **kwargs)
+        for field in self.fields:
+            self.fields[field].read_only = True
+
     class Meta:
         model = Order
         exclude = ['firm']
         extra_kwargs = {'contract': {'choices': get_valid_contracts()}}
 
 
+ORDER_FIELDS = [f.name for f in Order._meta.get_fields() if f.name != 'firm']
+BIDASK_FIELDS = ['commodity', 'price', 'quantity', 'contract', 'side']
+
+
+def get_order_serialized(qs: QuerySet, fields=None):
+    if fields is None:
+        fields = ORDER_FIELDS
+    return list(qs.values(*fields))
+
+
 class BidAskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['commodity', 'price', 'quantity', 'contract', 'side']
+        read_only_fields = fields
 
 
-class CommoditiesSerializer(serializers.ModelSerializer):
-    """
-    Serializes all commodities and available contracts
-    """
-    commodities = serializers.SerializerMethodField()
-
-    def get_commodities(self, obj):
-        # TODO: choices will possibly be no longer available for contracts
-        choices = [choice for choice in Order._meta.get_field('commodity').choices]
-        contracts = [contract for contract in Order._meta.get_field('contract').choices]
-        baseurl = reverse(self.context['view'], request=self.context['request'])
-        choice_urls = {choice[1]: {
-            contract[1]: '%s%s%s' % (baseurl, choice[0], contract[0]) for contract in contracts
-        } for choice in choices}
-        return choice_urls
-
-    class Meta:
-        model = Order
-        fields = ['commodities']
+def get_commodities(view, request):
+    # TODO: choices will possibly be no longer available for contracts
+    choices = [choice for choice in Order._meta.get_field('commodity').choices]
+    contracts = [contract for contract in Order._meta.get_field('contract').choices]
+    baseurl = reverse(view, request=request)
+    choice_urls = {choice[1]: {
+        contract[1]: '%s%s%s' % (baseurl, choice[0], contract[0]) for contract in contracts
+    } for choice in choices}
+    return choice_urls
 
 
 class PriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = ['fill_time', 'commodity', 'contract', 'price']
+        read_only_fields = fields
 
 
 class WarehouseReceiptDetailSerializer(serializers.ModelSerializer):

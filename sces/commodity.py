@@ -1,6 +1,6 @@
 import calendar
-from enum import Enum
 from datetime import datetime
+from enum import Enum
 
 BBL = 'barrel'
 BSHL = 'bushel'
@@ -122,3 +122,17 @@ def get_delivery_date(contract: str):
     last_delivery_date = datetime(year=year, month=month, day=15)
 
     return first_delivery_date, last_delivery_date
+
+
+def get_tplus_contract_code(tplus: int) -> str:
+    """
+    Gets the contract code T+? months in the future
+    :param tplus: num of months ahead
+    :return: a string representing the contract code
+    """
+    month_to_add = tplus % 12
+    year_to_add = tplus // 12
+    month = datetime.now().month + month_to_add
+    year = datetime.now().year + year_to_add
+
+    return CONTRACT_CODES[month - 1] + str(year % 1000)

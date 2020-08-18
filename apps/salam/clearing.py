@@ -2,6 +2,8 @@ from apps.salam.models import Order, Transaction, WarehouseReceipt
 
 
 def match_order(order: Order):
+    if not order:
+        return
     if order.filled:
         order.delete()
         return

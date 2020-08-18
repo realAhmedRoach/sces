@@ -13,5 +13,5 @@ def validate_contract_code(value):
 # TODO: Price order validators, must be within range of market price
 
 def validate_is_warehouse(value):
-    if value.type is not 'WRHS':
+    if value.type != 'WRHS':
         raise ValidationError(_('The selected firm is not a valid Warehouse'))

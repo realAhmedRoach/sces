@@ -3,6 +3,7 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 
 from apps.salam.models import ExchangeUser, Order, Firm, WarehouseReceipt
+from commodity import get_tplus_contract_code
 
 
 @override_settings(Q_CLUSTER={'name': 'scesapi-test', 'sync': True}, SUSPEND_SIGNALS=True)
@@ -19,20 +20,24 @@ class APITestCase(TestCase):
         self.client = APIClient()
         self.client.login(username='user', password='secure_the_bag')
 
+        self.contract = get_tplus_contract_code(3)
+
         # BUY ORDERS
-        Order.objects.create(firm=self.user.firm, quantity=500, commodity='CL', contract='Z20', order_type='LMT',
+        Order.objects.create(firm=self.user.firm, quantity=500, commodity='CL', contract=self.contract,
+                             order_type='LMT',
                              side='BUY', price=39)
-        Order.objects.create(firm=self.user.firm, quantity=500, commodity='CL', contract='Z20', order_type='LMT',
+        Order.objects.create(firm=self.user.firm, quantity=500, commodity='CL', contract=self.contract,
+                             order_type='LMT',
                              side='BUY', price=40)
 
         # SELL ORDERS
-        Order.objects.create(firm=other_firm, quantity=500, commodity='CL', contract='Z20', order_type='LMT',
+        Order.objects.create(firm=other_firm, quantity=500, commodity='CL', contract=self.contract, order_type='LMT',
                              side='SELL', price=40)
-        Order.objects.create(firm=other_firm, quantity=500, commodity='CL', contract='Z20', order_type='LMT',
+        Order.objects.create(firm=other_firm, quantity=500, commodity='CL', contract=self.contract, order_type='LMT',
                              side='SELL', price=41)
 
     def test_get_bid_ask(self):
-        response = self.client.get(reverse('bidask-list') + 'CLZ20/')
+        response = self.client.get(reverse('bidask-list') + f'CL{self.contract}/')
         self.assertEquals(float(response.data[0]['price']), 40.0)
         self.assertEquals(float(response.data[1]['price']), 40.0)
 
@@ -42,3 +47,9 @@ class APITestCase(TestCase):
 
     def test_warehouse_receipt(self):
         WarehouseReceipt.receipts.create(commodity='CL', quantity=100, firm=self.warehouse, warehouse=self.warehouse)
+
+    def test_match_all_orders(self):
+        pass
+
+    def test_get_current_price(self):
+        pass

@@ -39,9 +39,15 @@ class OrderViewSet(mixins.CreateModelMixin,
     def get_queryset(self):
         return Order.objects.filter(firm=self.request.user.firm)
 
+    def list(self, request, *args, **kwargs):
+        return Response(get_order_serialized(qs=self.get_queryset()))
+
+    def retrieve(self, request, *args, **kwargs):
+        return Response(get_order_serialized(qs=self.get_queryset().filter(uid=self.kwargs[self.lookup_field]))[0])
+
     def get_serializer_class(self):
         if self.action in ['retrieve', 'list']:
-            return OrderDetailSerializer
+            return None
         else:
             return OrderUpdateSerializer
 
@@ -60,8 +66,8 @@ class BidAskViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericVie
                 return [bid, ask]
 
     def list(self, request, *args, **kwargs):
-        serializer = CommoditiesSerializer(Order.objects.none(), context={'request': request, 'view': 'bidask-list'})
-        return Response(serializer.data)
+        data = get_commodities(view='bidask-list', request=request)
+        return Response(data)
 
     def retrieve(self, request, *args, **kwargs):
         serializer = self.get_serializer(self.get_queryset(), many=True)
@@ -80,9 +86,8 @@ class PriceViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, GenericView
             return current_price
 
     def list(self, request, *args, **kwargs):
-        serializer = CommoditiesSerializer(Transaction.transactions.none(),
-                                           context={'request': request, 'view': 'price-list'})
-        return Response(serializer.data)
+        data = get_commodities(view='price-list', request=request)
+        return Response(data)
 
     def retrieve(self, request, *args, **kwargs):
         qs = self.get_queryset()
@@ -101,7 +106,7 @@ class WarehouseReceiptViewSet(mixins.CreateModelMixin,
                               NoDescriptionMixin,
                               GenericViewSet):
     lookup_field = 'uid'
-    permission_classes = (WarehousePermissions,)
+    permission_classes = (IsAuthenticated, WarehousePermissions,)
 
     def get_queryset(self):
         return WarehouseReceipt.receipts.get_filtered_queryset(self.request.user.firm)
