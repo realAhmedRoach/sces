@@ -1,7 +1,3 @@
-import cProfile
-import threading
-from time import time
-
 from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -10,10 +6,6 @@ from rest_framework.test import APIClient
 from apps.salam.clearing import match_order
 from apps.salam.models import ExchangeUser, Order, Firm, WarehouseReceipt, Transaction
 from commodity import get_tplus_contract_code
-
-
-def run_async(func, args):
-    threading.Thread(target=func, args=args).start()
 
 
 @override_settings(Q_CLUSTER={'name': 'scesapi-test', 'sync': True}, SUSPEND_SIGNALS=True)
@@ -50,7 +42,7 @@ class APITestCase(TestCase):
         self.client.login(username='user', password='secure_the_bag')
 
     def test_get_bid_ask(self):
-        response = self.client.get(reverse('bidask-detail', args=[f'CL{self.contract}/']))
+        response = self.client.get(reverse('bidask-detail', args=[f'CL{self.contract}']))
         self.assertEquals(float(response.data[0]['price']), 40.0)
         self.assertEquals(float(response.data[1]['price']), 40.0)
 
@@ -67,25 +59,18 @@ class APITestCase(TestCase):
         response = self.client.post(reverse('order-list'), data=data, format='json')
         self.assertEquals(45.00, float(response.data['price']))
         self.assertEquals(Order.objects.get(uid=response.data['uid']).firm, self.user.firm)
-        cProfile.runctx("for i in range(5000): self.client.post(reverse('order-list'), data=data, format='json')",
-                        globals=globals(), locals=locals())
 
     def test_get_all_orders(self):
         response = self.client.get(reverse('order-list'))
         self.assertEquals(len(response.data), 2)
-        cProfile.runctx("for i in range(5000): run_async(self.client.get, args=[reverse('order-list')])",
-                        globals=globals(), locals=locals())
 
     def test_warehouse_receipt(self):
         receipt = WarehouseReceipt(commodity='CL', quantity=100, firm=self.warehouse, warehouse=self.warehouse)
         self.assertRaises(ValidationError, receipt.full_clean)
 
     def test_match_all_orders(self):
-        start = time()
         for order in Order.objects.all():
             match_order(order)
-        end = time()
-        print('Elapsed: %s' % (end - start))
         self.assertEquals(1, Transaction.transactions.count())
         self.assertEquals(40.00, Transaction.transactions.latest().price)
 
