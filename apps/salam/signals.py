@@ -30,6 +30,7 @@ def suspendingreceiver(signal, **decorator_kwargs):
 
 @suspendingreceiver(post_save, sender=Order)
 def send_order_to_engine(sender, instance, **kwargs):
+    """Matches all orders"""
     for order in Order.objects.all():
         if order and order.filled:
             order.delete()
@@ -45,5 +46,6 @@ def bank_transfer(sender, instance, **kwargs):
 
 @suspendingreceiver(post_save, sender=Transaction)
 def schedule_delivery(sender, instance: Transaction, **kwargs):
+    """Adds a task to schedule delivery at the correct date"""
     delivery_date = get_delivery_date(instance.contract)[0]  # get first delivery date for simplicity
     schedule('apps.salam.clearing.delivery', instance.uid, next_run=delivery_date)

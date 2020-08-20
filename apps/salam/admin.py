@@ -8,6 +8,7 @@ from .models import *
 
 @admin.register(ExchangeUser)
 class ExchangeUserAdmin(UserAdmin):
+    """Custom user admin"""
     add_form = ExchangeUserCreationForm
     form = ExchangeUserChangeForm
     model = ExchangeUser
@@ -20,11 +21,13 @@ class ExchangeUserAdmin(UserAdmin):
 
 @admin.register(Firm)
 class FirmAdmin(ModelAdmin):
+    """Custom Firm admin"""
     list_display = ['symbol', 'name', ]
 
 
 @admin.register(Order)
 class OrderAdmin(ModelAdmin):
+    """Custom order admin"""
     list_display = ['commodity', 'quantity', 'price', 'contract', 'side', 'firm', 'order_time']
 
     def get_readonly_fields(self, request, obj=None):
@@ -36,6 +39,7 @@ class OrderAdmin(ModelAdmin):
 
 @admin.register(Transaction)
 class TransactionAdmin(ModelAdmin):
+    """Custom transaction admin"""
     list_display = ['commodity', 'contract', 'quantity', 'price', 'fill_time']
 
     def get_readonly_fields(self, request, obj=None):

@@ -23,6 +23,9 @@ class CurrentUserFirmDefault:
 
 
 class OrderUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating and changing an order
+    """
     firm = serializers.HiddenField(default=CurrentUserFirmDefault())
 
     def validate_contract(self, value):
@@ -36,6 +39,10 @@ class OrderUpdateSerializer(serializers.ModelSerializer):
 
 
 class OrderDetailSerializer(serializers.ModelSerializer):
+    """
+    ModelSerialzer for getting order info
+    """
+
     def __init__(self, *args, **kwargs):
         super(OrderDetailSerializer, self).__init__(*args, **kwargs)
         for field in self.fields:
@@ -52,12 +59,14 @@ BIDASK_FIELDS = ['commodity', 'price', 'quantity', 'contract', 'side']
 
 
 def get_order_serialized(qs: QuerySet, fields=None):
+    """Serializer function for performance"""
     if fields is None:
         fields = ORDER_FIELDS
     return list(qs.values(*fields))
 
 
 class BidAskSerializer(serializers.ModelSerializer):
+    """Serializes order to get bid & ask info"""
     class Meta:
         model = Order
         fields = ['commodity', 'price', 'quantity', 'contract', 'side']
@@ -65,6 +74,7 @@ class BidAskSerializer(serializers.ModelSerializer):
 
 
 def get_commodities(view, request):
+    """Gets list of all commodities and contracts for each commodity with a link to a view"""
     # TODO: choices will possibly be no longer available for contracts
     choices = [choice for choice in Order._meta.get_field('commodity').choices]
     contracts = [contract for contract in Order._meta.get_field('contract').choices]
@@ -76,6 +86,7 @@ def get_commodities(view, request):
 
 
 class PriceSerializer(serializers.ModelSerializer):
+    """Serializes latest price"""
     class Meta:
         model = Transaction
         fields = ['fill_time', 'commodity', 'contract', 'price']
@@ -83,6 +94,7 @@ class PriceSerializer(serializers.ModelSerializer):
 
 
 class WarehouseReceiptDetailSerializer(serializers.ModelSerializer):
+    """Serializer for getting WarehouseReceipts"""
     url = serializers.SerializerMethodField()
 
     def get_url(self, obj):
@@ -94,6 +106,7 @@ class WarehouseReceiptDetailSerializer(serializers.ModelSerializer):
 
 
 class WarehouseReceiptUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for updating WarehouseReceipt"""
     warehouse = serializers.HiddenField(default=CurrentUserFirmDefault())
 
     def validate(self, attrs):

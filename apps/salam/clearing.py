@@ -2,6 +2,11 @@ from apps.salam.models import Order, Transaction, WarehouseReceipt
 
 
 def match_order(order: Order):
+    """
+    Match an order using price-time algorithm
+    Pro-rata algorith would probably be better for this use case, as it incentivizes larger orders
+    :param order: The order to be matched
+    """
     if not order:
         return
     if order.filled:
@@ -56,6 +61,7 @@ def match_order(order: Order):
 
 
 def deliver(trans_id: str):
+    """Shift ownership of a commodity from one firm to another"""
     trans = Transaction.objects.get(uid=trans_id)
     long_firm = trans.long_firm
     short_firm = trans.short_firm

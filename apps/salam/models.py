@@ -11,6 +11,7 @@ from sces.commodity import get_commodity_choices, get_valid_contracts
 
 
 class ExchangeUser(AbstractUser):
+    """Custom user model with foreignkey to firm"""
     firm = models.ForeignKey(verbose_name='Firm', to='Firm', on_delete=models.CASCADE, null=True)
 
     def __str__(self):
@@ -18,6 +19,7 @@ class ExchangeUser(AbstractUser):
 
 
 class Firm(models.Model):
+    """Firm model, represents entity that can make orders and own commodities"""
     FIRM_TYPES = (('WRHS', 'Warehouse'), ('PROD', 'Producer'), ('CONS', 'Consumer'), ('TRAD', 'Trader'))
 
     uid = models.UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
@@ -30,11 +32,13 @@ class Firm(models.Model):
 
 
 class WarehouseReceiptManager(models.Manager):
+    """Custom manager for WarehouseReceipt; has custom filter based on firm"""
     def get_filtered_queryset(self, firm: Firm):
         return self.get_queryset().filter(models.Q(firm=firm) | models.Q(warehouse=firm))
 
 
 class WarehouseReceipt(models.Model):
+    """WarehouseReceipt model, represents ownership of a commodity"""
     uid = models.UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     created_time = models.DateTimeField(verbose_name='Created Time', auto_now_add=True)
     commodity = models.CharField(verbose_name='Commodity', max_length=2, choices=get_commodity_choices())
@@ -48,7 +52,8 @@ class WarehouseReceipt(models.Model):
 
     def clean(self):
         if self.firm == self.warehouse:
-            raise ValidationError(_('The warehouse cannot own a commodity in its own location'))
+            raise ValidationError(_('The warehouse cannot own a commodity in its own location'),
+                                  code='firm_ne_warehouse')
 
     def __str__(self):
         return f'<{self.firm}> {self.quantity} {self.commodity} ({self.created_time})'
@@ -60,6 +65,7 @@ class WarehouseReceipt(models.Model):
 
 
 class BidAskManager(models.Manager):
+    """Gets bids and asks from orders"""
     def get_queryset(self):
         return super(BidAskManager, self).get_queryset().filter(quantity_filled__lt=F('quantity'))
 
@@ -83,6 +89,9 @@ class BidAskManager(models.Manager):
 
 
 class Order(models.Model):
+    """
+    Order, represents intent to buy or sell commmodity in market at specified contract date, with immediate payment
+    """
     TRADE_SIDES = (('BUY', 'BUY'), ('SELL', 'SELL'))
     ORDER_TYPES = (('MRKT', 'Market'), ('LMT', 'Limit'))
 
@@ -121,11 +130,17 @@ class Order(models.Model):
 
 
 class PriceManager(models.Manager):
+    """
+    Custom price manager with support for getting latest price
+    """
+
     def current_price(self, contract_code):
+        """Gets latest transaction based on contract code"""
         return self.get_queryset().filter(commodity=contract_code[:2], contract=contract_code[-3:]).first()
 
 
 class Transaction(models.Model):
+    """Represents completed transaction between two firms"""
     uid = models.UUIDField(verbose_name='UID', primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     long_firm = models.ForeignKey(verbose_name='Long Firm', to='Firm', on_delete=models.CASCADE,
                                   related_name='long_firm')
